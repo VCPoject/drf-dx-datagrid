@@ -69,17 +69,23 @@ class DxFilterBackend(filters.BaseFilterBackend, DxMixin):
             return self.__leaf_node_to_q(dx_filter)
         else:
             q_elems = []
-
+            excludeOper = False
             for elem in dx_filter:
                 if isinstance(elem, list):
-                    q_elems.append(self.__generate_q_expr(elem))
+                    q_elem = self.__generate_q_expr(elem)
+                    if excludeOper:
+                        q_elem = ~q_elem
+                        excludeOper = False
+                    q_elems.append(q_elem)
+                elif elem == "!":
+                    excludeOper = True
                 elif elem in ["and", "or"]:
                     q_elems.append(elem)
                 else:
                     raise Exception("Невозможно применить данный поиск")
             q_expr = q_elems[0]
             for num_pair in range(0, len(q_elems) // 2):
-                oper = q_elems[num_pair * 2 + 1]
+                oper = q_elems[num_pair * 2 + 1]          
                 if oper == "and":
                     q_expr = q_expr & q_elems[(num_pair + 1) * 2]
                 else:
